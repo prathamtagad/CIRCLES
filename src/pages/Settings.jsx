@@ -9,11 +9,11 @@ import {
     HelpCircle,
     ChevronRight,
     LogOut,
-    User,
-    ArrowUpRight
+    ArrowUpRight,
+    User
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { deleteUserAccount } from '../firebase/auth'; // Need to verify/create this
+import { deleteUserAccount } from '../firebase/auth';
 import { useState } from 'react';
 
 export default function Settings() {
@@ -40,9 +40,6 @@ export default function Settings() {
 
         setDeleting(true);
         try {
-            // 1. Delete data (best effort)
-            // 2. Delete auth
-            // Use locally defined or imported, assuming it will be implemented
             const res = await deleteUserAccount();
             if (res.success) {
                 showToast("Account deleted. Goodbye.", "success");
@@ -97,7 +94,8 @@ export default function Settings() {
                     icon: <Globe size={20} />,
                     label: 'Language',
                     description: 'English (US)',
-                    action: 'link'
+                    action: 'click',
+                    onClick: () => showToast('English is the only supported language currently.', 'info')
                 }
             ]
         },
@@ -116,7 +114,7 @@ export default function Settings() {
                     label: 'Edit Profile',
                     description: 'Change name, bio, and avatar',
                     action: 'navigate',
-                    path: '/profile?edit=true'
+                    path: '/profile'
                 }
             ]
         },
@@ -127,7 +125,8 @@ export default function Settings() {
                     icon: <HelpCircle size={20} />,
                     label: 'Help Center',
                     description: 'FAQs and support resources',
-                    action: 'link'
+                    action: 'click',
+                    onClick: () => showToast('Support resources coming soon!', 'info')
                 }
             ]
         }
@@ -217,48 +216,59 @@ export default function Settings() {
                         {group.title}
                     </h3>
                     <div className="card overflow-hidden">
-                        {group.items.map((item, itemIdx) => (
-                            <div
-                                key={itemIdx}
-                                className={`flex items-center gap-4 p-4 ${itemIdx !== group.items.length - 1 ? 'border-b border-[var(--color-border)]' : ''
-                                    } ${item.highlight ? 'bg-[var(--color-accent)]/5' : ''}`}
-                            >
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.highlight
-                                    ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
-                                    : 'bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]'
-                                    }`}>
-                                    {item.icon}
-                                </div>
+                        {group.items.map((item, itemIdx) => {
+                            const ItemContent = () => (
+                                <>
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.highlight
+                                        ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
+                                        : 'bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]'
+                                        }`}>
+                                        {item.icon}
+                                    </div>
 
-                                <div className="flex-1">
-                                    <div className="font-medium">{item.label}</div>
-                                    <p className="text-sm text-[var(--color-text-muted)]">
-                                        {item.description}
-                                    </p>
-                                </div>
+                                    <div className="flex-1 text-left">
+                                        <div className="font-medium">{item.label}</div>
+                                        <p className="text-sm text-[var(--color-text-muted)]">
+                                            {item.description}
+                                        </p>
+                                    </div>
 
-                                {item.action === 'toggle' && (
-                                    <button
-                                        onClick={item.onToggle}
-                                        disabled={item.disabled}
-                                        className={`toggle ${item.value ? 'active' : ''} ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        role="switch"
-                                        aria-checked={item.value}
-                                        aria-label={`Toggle ${item.label}`}
-                                    />
-                                )}
+                                    {item.action === 'toggle' && (
+                                        <div
+                                            className={`toggle ${item.value ? 'active' : ''} ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            role="switch"
+                                            aria-checked={item.value}
+                                        />
+                                    )}
 
-                                {item.action === 'navigate' && (
-                                    <Link to={item.path} className="flex items-center text-[var(--color-text-muted)] hover:text-white">
-                                        <ChevronRight size={18} />
+                                    {(item.action === 'navigate' || item.action === 'click') && (
+                                        <ChevronRight size={18} className="text-[var(--color-text-muted)]" />
+                                    )}
+                                </>
+                            );
+
+                            const className = `flex items-center gap-4 p-4 w-full transition-colors hover:bg-[var(--color-surface-hover)]/50 ${itemIdx !== group.items.length - 1 ? 'border-b border-[var(--color-border)]' : ''
+                                } ${item.highlight ? 'bg-[var(--color-accent)]/5' : ''}`;
+
+                            if (item.action === 'navigate') {
+                                return (
+                                    <Link key={itemIdx} to={item.path} className={className}>
+                                        <ItemContent />
                                     </Link>
-                                )}
+                                );
+                            }
 
-                                {item.action === 'link' && (
-                                    <ChevronRight size={18} className="text-[var(--color-text-muted)]" />
-                                )}
-                            </div>
-                        ))}
+                            return (
+                                <button
+                                    key={itemIdx}
+                                    onClick={item.action === 'toggle' ? item.onToggle : item.onClick}
+                                    disabled={item.disabled}
+                                    className={`${className} ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    <ItemContent />
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             ))}
@@ -311,3 +321,6 @@ export default function Settings() {
         </div>
     );
 }
+
+// User Icon needed for User item in array
+function UserIcon({ size }) { return <User size={size} />; }

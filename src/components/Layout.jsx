@@ -84,7 +84,9 @@ export default function Layout() {
                         </Link>
                     </div>
 
-                    <Outlet />
+                    <div key={location.pathname} className="animate-fade-in-up">
+                        <Outlet />
+                    </div>
                 </main>
 
                 {/* DESKTOP WIDGETS (Right) - Hidden on Mobile/Tablet */}
@@ -175,6 +177,7 @@ export default function Layout() {
                         <Link to="/privacy" className="hover:underline">Privacy</Link>
                         <Link to="/terms" className="hover:underline">Terms</Link>
                         <Link to="/transparency" className="hover:underline">Transparency</Link>
+                        <Link to="/team" className="hover:underline text-violet-400">Team</Link>
                         <span>© 2026 Circles Inc.</span>
                     </div>
                 </div>

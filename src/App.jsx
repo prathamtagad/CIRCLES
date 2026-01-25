@@ -12,6 +12,7 @@ import Terms from './pages/Terms';
 import Transparency from './pages/Transparency';
 import SearchPage from './pages/Search';
 import Settings from './pages/Settings';
+import Team from './pages/Team';
 import Layout from './components/Layout';
 import LoadingScreen from './components/LoadingScreen';
 
@@ -50,6 +51,7 @@ function AppRoutes() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/transparency" element={<Transparency />} />
+          <Route path="/team" element={<Team />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
