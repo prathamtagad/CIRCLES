@@ -1,4 +1,5 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Outlet, NavLink, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import Sidebar from './Sidebar';
 import {
@@ -8,12 +9,14 @@ import {
     Shield,
     Settings,
     Search,
-    MoreHorizontal
+    UserPlus
 } from 'lucide-react';
 
 export default function Layout() {
-    const { circles } = useApp();
+    const { circles, users, currentUser, setActiveCircle } = useApp();
     const location = useLocation();
+    const navigate = useNavigate();
+    const [circleSearchQuery, setCircleSearchQuery] = useState('');
 
     const mobileNavItems = [
         { path: '/', icon: Home, label: 'Home' },
@@ -22,6 +25,24 @@ export default function Layout() {
         { path: '/privacy', icon: Shield, label: 'Privacy' },
         { path: '/settings', icon: Settings, label: 'Config' },
     ];
+
+    // Filter users for "Suggested"
+    // Exclude current user (should be handled by server, but strict check here)
+    const suggestedUsers = (users || [])
+        .filter(u => u.id !== currentUser?.uid)
+        .slice(0, 3);
+
+    // Filter circles for Sidebar
+    const filteredCircles = circles.filter(c =>
+        c.name.toLowerCase().includes(circleSearchQuery.toLowerCase())
+    ).slice(0, 5); // Show top 5 matches
+
+    const handleCircleClick = (circleId) => {
+        setActiveCircle(circleId);
+        navigate('/');
+        // Optional: Scroll to top?
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     return (
         <div className="min-h-screen bg-[#030712] text-white flex justify-center">
@@ -42,7 +63,7 @@ export default function Layout() {
                     {/* Top Mobile Header */}
                     <div className="md:hidden sticky top-0 z-40 glass border-b border-white/5 px-4 h-14 flex items-center justify-between">
                         <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">Circles</span>
-                        <div className="w-8 h-8 rounded-full bg-white/10"></div>{/* Placeholder for user */}
+                        <div className="w-8 h-8 rounded-full bg-slate-800"></div>{/* Placeholder for user */}
                     </div>
 
                     <Outlet />
@@ -55,6 +76,8 @@ export default function Layout() {
                         <Search className="absolute left-4 top-3.5 text-slate-500 group-focus-within:text-violet-500 transition-colors" size={20} />
                         <input
                             type="text"
+                            value={circleSearchQuery}
+                            onChange={(e) => setCircleSearchQuery(e.target.value)}
                             placeholder="Search Circles"
                             className="w-full bg-white/5 border border-white/5 rounded-full py-3 pl-12 pr-4 outline-none focus:border-violet-500/50 focus:bg-black/50 transition-all text-sm"
                         />
@@ -64,8 +87,12 @@ export default function Layout() {
                     <div className="bg-white/5 border border-white/5 rounded-2xl p-4">
                         <h3 className="font-bold text-lg mb-4">Your Trust Circles</h3>
                         <div className="space-y-4">
-                            {circles.length > 0 ? circles.slice(0, 4).map(c => (
-                                <div key={c.id} className="flex items-center justify-between group cursor-pointer">
+                            {filteredCircles.length > 0 ? filteredCircles.map(c => (
+                                <div
+                                    key={c.id}
+                                    onClick={() => handleCircleClick(c.id)}
+                                    className="flex items-center justify-between group cursor-pointer hover:bg-white/5 p-2 -mx-2 rounded-xl transition-colors"
+                                >
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border border-white/5 transition-transform group-hover:scale-110" style={{ backgroundColor: `${c.color}20`, color: c.color }}>
                                             {c.name.charAt(0)}
@@ -77,19 +104,57 @@ export default function Layout() {
                                     </div>
                                 </div>
                             )) : (
-                                <p className="text-sm text-slate-500">No circles yet.</p>
+                                <p className="text-sm text-slate-500">
+                                    {circleSearchQuery ? 'No matching circles.' : 'No circles yet.'}
+                                </p>
                             )}
                         </div>
-                        {circles.length > 0 && (
+                        {circles.length > 5 && !circleSearchQuery && (
                             <div className="mt-4 pt-4 border-t border-white/5 text-center">
                                 <NavLink to="/circles" className="text-sm text-violet-400 hover:text-violet-300 font-medium">Show more</NavLink>
                             </div>
                         )}
                     </div>
 
+                    {/* 🤝 SUGGESTED CONNECTIONS (Find Friends) */}
+                    <div className="bg-white/5 border border-white/5 rounded-2xl p-4">
+                        <h3 className="font-bold text-lg mb-4">Who to add</h3>
+                        <div className="space-y-4">
+                            {suggestedUsers.length > 0 ? suggestedUsers.map(u => (
+                                <div key={u.id} className="flex items-center justify-between group">
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-400 shrink-0">
+                                            {u.photoURL ? (
+                                                <img src={u.photoURL} className="w-full h-full rounded-full object-cover" />
+                                            ) : (
+                                                u.name.charAt(0)
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="font-bold text-[15px] truncate text-white">{u.name}</span>
+                                            <span className="text-xs text-slate-500 truncate">Suggested for you</span>
+                                        </div>
+                                    </div>
+                                    <Link
+                                        to="/circles/create"
+                                        className="p-2 rounded-full bg-white/5 hover:bg-violet-500/20 text-violet-400 transition-colors"
+                                        title="Add to new circle"
+                                    >
+                                        <UserPlus size={18} />
+                                    </Link>
+                                </div>
+                            )) : (
+                                <p className="text-sm text-slate-500">No suggestions available.</p>
+                            )}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-white/5 text-center">
+                            <p className="text-xs text-slate-500">Connect by adding people to circles.</p>
+                        </div>
+                    </div>
+
                     {/* Footer Widget */}
                     <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-600 px-2">
-                        <a href="#" className="hover:underline">Privacy</a>
+                        <Link to="/privacy" className="hover:underline">Privacy</Link>
                         <a href="#" className="hover:underline">Terms</a>
                         <a href="#" className="hover:underline">Transparency</a>
                         <span>© 2026 Circles Inc.</span>

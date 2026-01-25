@@ -35,7 +35,7 @@ export function AppProvider({ children }) {
     // App state
     const [circles, setCircles] = useState([]);
     const [posts, setPosts] = useState([]);
-    const [users, setUsers] = useState([]); // Re-added users state
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isOnboarded, setIsOnboarded] = useState(false);
     const [liteMode, setLiteMode] = useState(false);
@@ -48,35 +48,41 @@ export function AppProvider({ children }) {
     // Initialize Auth
     useEffect(() => {
         const unsubscribe = onAuthChange(async (user) => {
+            // 1. Set user immediately
             setCurrentUser(user);
 
             if (user) {
-                setAuthLoading(true); // Ensure loading while profile fetches
-                // Fetch user profile
+                setAuthLoading(true);
+
+                // 2. Fetch critical profile data
                 const result = await getUserProfile(user.uid);
                 if (result.success) {
                     setUserProfile(result.data);
                     setIsOnboarded(result.data.isOnboarded || false);
                     setLiteMode(result.data.settings?.liteMode || false);
                 } else {
-                    // Graceful fallback
                     setIsOnboarded(false);
                 }
 
-                // Fetch all users for selection in Create Circle (Best effort)
-                const usersResult = await getAllUsers();
-                if (usersResult.success) {
-                    setUsers(usersResult.data);
-                }
+                // 3. Stop loading screen immediately so app is interactive
+                setAuthLoading(false);
+
+                // 4. Fetch non-critical data (All Users) in background
+                getAllUsers().then(usersResult => {
+                    if (usersResult.success) {
+                        setUsers(usersResult.data);
+                    }
+                }).catch(err => console.warn("Background fetch users failed", err));
+
             } else {
+                // Reset state
                 setUserProfile(null);
                 setIsOnboarded(false);
                 setCircles([]);
                 setPosts([]);
                 setUsers([]);
+                setAuthLoading(false);
             }
-
-            setAuthLoading(false);
         });
 
         return () => unsubscribe();
