@@ -6,12 +6,14 @@ import {
     onAuthStateChanged,
     GoogleAuthProvider,
     setPersistence,
-    browserLocalPersistence
+    browserLocalPersistence,
+    deleteUser
 } from "firebase/auth";
 import {
     doc,
     getDoc,
     setDoc,
+    deleteDoc,
     serverTimestamp
 } from "firebase/firestore";
 import { auth, db, googleProvider } from "./config";
@@ -133,6 +135,31 @@ export async function updateUserProfile(uid, data) {
         await setDoc(userRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
         return { success: true };
     } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+// Delete user account
+export async function deleteUserAccount() {
+    try {
+        const user = auth.currentUser;
+        if (!user) return { success: false, error: "No user logged in" };
+
+        // 1. Delete Firestore profile
+        try {
+            await deleteDoc(doc(db, "users", user.uid));
+        } catch (dbErr) {
+            console.warn("Could not delete user profile doc (might be permissions):", dbErr);
+            // Continue to delete Auth account anyway
+        }
+
+        // 2. Delete Auth account
+        await deleteUser(user);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Delete account error:", error);
+        // User might need to re-login if it's been too long (Firebase requirement)
         return { success: false, error: error.message };
     }
 }

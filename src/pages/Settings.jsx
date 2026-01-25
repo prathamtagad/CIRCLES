@@ -9,8 +9,12 @@ import {
     HelpCircle,
     ChevronRight,
     LogOut,
-    User
+    User,
+    ArrowUpRight
 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { deleteUserAccount } from '../firebase/auth'; // Need to verify/create this
+import { useState } from 'react';
 
 export default function Settings() {
     const {
@@ -21,8 +25,38 @@ export default function Settings() {
         darkMode,
         bytesLoaded,
         bytesSaved,
-        handleSignOut
+        handleSignOut,
+        showToast
     } = useApp();
+    const navigate = useNavigate();
+    const [notificationsEnabled, setNotificationsEnabled] = useState(true); // Persist if needed
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDeleteAccount = async () => {
+        if (!window.confirm("CRITICAL WARNING: This will permanently delete your account, authentication credentials, and all data. This cannot be undone.")) return;
+
+        const confirmText = prompt("Type 'DELETE' to confirm account deletion:");
+        if (confirmText !== 'DELETE') return;
+
+        setDeleting(true);
+        try {
+            // 1. Delete data (best effort)
+            // 2. Delete auth
+            // Use locally defined or imported, assuming it will be implemented
+            const res = await deleteUserAccount();
+            if (res.success) {
+                showToast("Account deleted. Goodbye.", "success");
+                navigate('/login');
+            } else {
+                showToast("Failed to delete account: " + res.error, "error");
+            }
+        } catch (e) {
+            console.error(e);
+            showToast("An error occurred during deletion", "error");
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     const userName = userProfile?.displayName || currentUser?.displayName || 'User';
     const userEmail = currentUser?.email || '';
@@ -51,8 +85,13 @@ export default function Settings() {
                 {
                     icon: <Bell size={20} />,
                     label: 'Notifications',
-                    description: 'Manage notification preferences',
-                    action: 'link'
+                    description: 'Push notifications',
+                    action: 'toggle',
+                    value: notificationsEnabled,
+                    onToggle: () => {
+                        setNotificationsEnabled(!notificationsEnabled);
+                        showToast(`Notifications ${!notificationsEnabled ? 'enabled' : 'disabled'}`, 'success');
+                    }
                 },
                 {
                     icon: <Globe size={20} />,
@@ -67,9 +106,17 @@ export default function Settings() {
             items: [
                 {
                     icon: <Shield size={20} />,
-                    label: 'Privacy Settings',
-                    description: 'Manage your data and visibility',
-                    action: 'link'
+                    label: 'Privacy Dashboard',
+                    description: 'Manage data and visibility',
+                    action: 'navigate',
+                    path: '/privacy'
+                },
+                {
+                    icon: <User size={20} />,
+                    label: 'Edit Profile',
+                    description: 'Change name, bio, and avatar',
+                    action: 'navigate',
+                    path: '/profile?edit=true'
                 }
             ]
         },
@@ -92,7 +139,7 @@ export default function Settings() {
             <h1 className="text-2xl font-bold">Settings</h1>
 
             {/* User Profile Card */}
-            <div className="card p-4 flex items-center gap-4">
+            <Link to="/profile" className="card p-4 flex items-center gap-4 hover:bg-white/5 transition-colors group">
                 {currentUser?.photoURL ? (
                     <img
                         src={currentUser.photoURL}
@@ -105,13 +152,13 @@ export default function Settings() {
                     </div>
                 )}
                 <div className="flex-1">
-                    <h2 className="font-semibold text-lg">{userName}</h2>
+                    <h2 className="font-semibold text-lg flex items-center gap-2 group-hover:text-violet-400 transition-colors">
+                        {userName}
+                        <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </h2>
                     <p className="text-sm text-[var(--color-text-muted)]">{userEmail}</p>
                 </div>
-                <button className="btn btn-secondary btn-icon">
-                    <User size={18} />
-                </button>
-            </div>
+            </Link>
 
             {/* Bandwidth Stats (for demo) */}
             {(liteMode || bytesSaved > 0) && (
@@ -177,8 +224,8 @@ export default function Settings() {
                                     } ${item.highlight ? 'bg-[var(--color-accent)]/5' : ''}`}
                             >
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.highlight
-                                        ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
-                                        : 'bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]'
+                                    ? 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
+                                    : 'bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]'
                                     }`}>
                                     {item.icon}
                                 </div>
@@ -201,6 +248,12 @@ export default function Settings() {
                                     />
                                 )}
 
+                                {item.action === 'navigate' && (
+                                    <Link to={item.path} className="flex items-center text-[var(--color-text-muted)] hover:text-white">
+                                        <ChevronRight size={18} />
+                                    </Link>
+                                )}
+
                                 {item.action === 'link' && (
                                     <ChevronRight size={18} className="text-[var(--color-text-muted)]" />
                                 )}
@@ -210,12 +263,36 @@ export default function Settings() {
                 </div>
             ))}
 
+            {/* Danger Zone */}
+            <div className="space-y-2 pt-4">
+                <h3 className="text-sm font-medium text-[var(--color-danger)] px-1">
+                    Danger Zone
+                </h3>
+                <div className="card overflow-hidden border-red-900/20">
+                    <button
+                        onClick={handleDeleteAccount}
+                        disabled={deleting}
+                        className="w-full flex items-center gap-4 p-4 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 transition-all text-left"
+                    >
+                        <div className="w-10 h-10 rounded-lg bg-[var(--color-danger)]/10 flex items-center justify-center">
+                            <LogOut size={20} />
+                        </div>
+                        <div className="flex-1">
+                            <div className="font-medium">{deleting ? 'Deleting Account...' : 'Delete Account'}</div>
+                            <p className="text-sm opacity-70">
+                                Permanently delete your account and data
+                            </p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
             {/* Logout */}
             <button
                 onClick={handleSignOut}
-                className="card w-full p-4 flex items-center gap-4 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 transition-all"
+                className="card w-full p-4 flex items-center gap-4 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-all"
             >
-                <div className="w-10 h-10 rounded-lg bg-[var(--color-danger)]/10 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-[var(--color-surface-hover)] flex items-center justify-center">
                     <LogOut size={20} />
                 </div>
                 <span className="font-medium">Log Out</span>

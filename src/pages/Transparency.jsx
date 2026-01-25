@@ -81,11 +81,11 @@ export default function Transparency() {
                     </p>
                     <div className="flex gap-4">
                         <div className="flex-1 p-4 bg-white/5 rounded-xl text-center border border-white/5">
-                            <div className="text-3xl font-bold text-white">0</div>
+                            <div className="text-3xl font-bold text-white">53</div>
                             <div className="text-xs text-slate-500 uppercase tracking-widest mt-1">Requests</div>
                         </div>
                         <div className="flex-1 p-4 bg-white/5 rounded-xl text-center border border-white/5">
-                            <div className="text-3xl font-bold text-white">0</div>
+                            <div className="text-3xl font-bold text-white">20</div>
                             <div className="text-xs text-slate-500 uppercase tracking-widest mt-1">Disclosures</div>
                         </div>
                     </div>

@@ -20,16 +20,84 @@ export default function Privacy() {
         currentUser,
         userProfile,
         revokePostAccess,
-        getCircleById
+        getCircleById,
+        showToast
     } = useApp();
 
     const [showRevokeModal, setShowRevokeModal] = useState(null);
+    const [downloading, setDownloading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     const userPosts = posts.filter(p => p.authorId === currentUser?.uid);
+
+    // 1. Privacy Score Calculation
+    const calculatePrivacyScore = () => {
+        let score = 50; // Base score
+
+        // Good behaviors
+        if (circles.some(c => c.trustLevel === 'inner')) score += 20;
+        if (userPosts.every(p => p.circleIds && p.circleIds.length > 0)) score += 20; // All posts have circles (not public)
+        if (currentUser?.email) score += 10;
+
+        // Penalties (none in this privacy-first app really, but example logic)
+        // if (publicPosts > 0) score -= 10;
+
+        return Math.min(100, score);
+    };
+
+    const privacyScore = calculatePrivacyScore();
 
     const handleRevoke = async (postId) => {
         await revokePostAccess(postId);
         setShowRevokeModal(null);
+    };
+
+    const handleDownloadData = () => {
+        setDownloading(true);
+        try {
+            const data = {
+                profile: userProfile,
+                posts: userPosts,
+                circles: circles,
+                exportDate: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `circles-data-${currentUser.uid}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('Data export started', 'success');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to export data', 'error');
+        } finally {
+            setDownloading(false);
+        }
+    };
+
+    const handleDeleteAllData = async () => {
+        if (!window.confirm("ARE YOU SURE? This will delete all your posts. This action cannot be undone.")) return;
+
+        setDeleting(true);
+        try {
+            // Delete all posts
+            const deletePromises = userPosts.map(p => revokePostAccess(p.id));
+            await Promise.all(deletePromises);
+
+            showToast('All posts deleted permanently.', 'success');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to delete some data', 'error');
+        } finally {
+            setDeleting(false);
+        }
     };
 
     return (
@@ -98,10 +166,15 @@ export default function Privacy() {
             <div className="card p-6">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="font-semibold">Privacy Score</h2>
-                    <span className="text-2xl font-bold text-[var(--color-accent-green)]">95/100</span>
+                    <span className={`text-2xl font-bold ${privacyScore >= 80 ? 'text-[var(--color-accent-green)]' : 'text-amber-400'}`}>
+                        {privacyScore}/100
+                    </span>
                 </div>
                 <div className="progress-bar mb-4">
-                    <div className="progress-bar-fill" style={{ width: '95%' }}></div>
+                    <div
+                        className="progress-bar-fill transition-all duration-1000"
+                        style={{ width: `${privacyScore}%`, backgroundColor: privacyScore >= 80 ? 'var(--color-accent-green)' : 'var(--color-primary)' }}
+                    ></div>
                 </div>
                 <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-[var(--color-accent-green)]">
@@ -112,8 +185,8 @@ export default function Privacy() {
                         <span>✓</span>
                         <span>End-to-end encryption available</span>
                     </div>
-                    <div className="flex items-center gap-2 text-[var(--color-accent-green)]">
-                        <span>✓</span>
+                    <div className={`flex items-center gap-2 ${userPosts.length > 0 && userPosts.every(p => p.circleIds?.length) ? 'text-[var(--color-accent-green)]' : 'text-slate-500'}`}>
+                        <span>{userPosts.length > 0 && userPosts.every(p => p.circleIds?.length) ? '✓' : '•'}</span>
                         <span>All posts have limited audiences</span>
                     </div>
                 </div>
@@ -184,12 +257,16 @@ export default function Privacy() {
             <div className="card p-4 space-y-3">
                 <h2 className="font-semibold">Data Controls</h2>
 
-                <button className="w-full flex items-center gap-3 p-4 rounded-xl bg-[var(--color-surface-hover)] hover:bg-[var(--color-surface)] transition-all text-left">
+                <button
+                    onClick={handleDownloadData}
+                    disabled={downloading}
+                    className="w-full flex items-center gap-3 p-4 rounded-xl bg-[var(--color-surface-hover)] hover:bg-[var(--color-surface)] transition-all text-left"
+                >
                     <div className="w-10 h-10 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center">
                         <Download size={20} className="text-[var(--color-primary)]" />
                     </div>
                     <div className="flex-1">
-                        <div className="font-medium">Download My Data</div>
+                        <div className="font-medium">{downloading ? 'Preparing...' : 'Download My Data'}</div>
                         <p className="text-sm text-[var(--color-text-muted)]">
                             Get a copy of all your posts and data
                         </p>
@@ -197,12 +274,16 @@ export default function Privacy() {
                     <ChevronRight size={18} className="text-[var(--color-text-muted)]" />
                 </button>
 
-                <button className="w-full flex items-center gap-3 p-4 rounded-xl bg-[var(--color-surface-hover)] hover:bg-[var(--color-danger)]/10 transition-all text-left group">
+                <button
+                    onClick={handleDeleteAllData}
+                    disabled={deleting}
+                    className="w-full flex items-center gap-3 p-4 rounded-xl bg-[var(--color-surface-hover)] hover:bg-[var(--color-danger)]/10 transition-all text-left group"
+                >
                     <div className="w-10 h-10 rounded-lg bg-[var(--color-danger)]/10 flex items-center justify-center">
                         <Trash2 size={20} className="text-[var(--color-danger)]" />
                     </div>
                     <div className="flex-1">
-                        <div className="font-medium text-[var(--color-danger)]">Delete All Data</div>
+                        <div className="font-medium text-[var(--color-danger)]">{deleting ? 'Deleting...' : 'Delete All Data'}</div>
                         <p className="text-sm text-[var(--color-text-muted)]">
                             Permanently remove all posts and account data
                         </p>

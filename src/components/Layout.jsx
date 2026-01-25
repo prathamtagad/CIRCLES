@@ -173,8 +173,8 @@ export default function Layout() {
                     {/* Footer Widget */}
                     <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-600 px-2">
                         <Link to="/privacy" className="hover:underline">Privacy</Link>
-                        <a href="#" className="hover:underline">Terms</a>
-                        <a href="#" className="hover:underline">Transparency</a>
+                        <Link to="/terms" className="hover:underline">Terms</Link>
+                        <Link to="/transparency" className="hover:underline">Transparency</Link>
                         <span>© 2026 Circles Inc.</span>
                     </div>
                 </div>

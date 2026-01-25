@@ -1,9 +1,15 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Plus, Users, Lock, Shield, ChevronRight, User } from 'lucide-react';
 
 export default function Circles() {
-    const { circles, users } = useApp();
+    const { circles, users, setActiveCircle } = useApp();
+    const navigate = useNavigate();
+
+    const handleCircleClick = (circleId) => {
+        setActiveCircle(circleId);
+        navigate('/');
+    };
 
     const getTrustConfig = (level) => {
         const configs = {
@@ -119,6 +125,7 @@ export default function Circles() {
                                     return (
                                         <div
                                             key={circle.id}
+                                            onClick={() => handleCircleClick(circle.id)}
                                             className="group relative overflow-hidden bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-pointer"
                                         >
                                             <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
