@@ -22,7 +22,7 @@ export default function Team() {
             special: false
         },
         {
-            name: 'Madhav Maheshwari',
+            name: 'Madhav Mandhanya',
             role: 'Backend Engineer & Security',
             bio: 'Ensuring robust data privacy, security rules, and scalable infrastructure.',
             icon: <Database size={24} className="text-emerald-400" />,
