@@ -7,7 +7,9 @@ import {
     Plus,
     Bell,
     LogOut,
-    Zap
+    Zap,
+    User,
+    Search
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -17,7 +19,9 @@ export default function Sidebar() {
 
     const navItems = [
         { path: '/', icon: Home, label: 'Home' },
+        { path: '/search', icon: Search, label: 'Search' },
         { path: '/circles', icon: Users, label: 'Circles' },
+        { path: '/profile', icon: User, label: 'Profile' },
         { path: '/privacy', icon: Shield, label: 'Privacy' },
         { path: '/settings', icon: Settings, label: 'Settings' },
     ];
@@ -80,8 +84,8 @@ export default function Sidebar() {
                     </div>
                 )}
 
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
-                    <div className="flex items-center gap-3 overflow-hidden">
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors group relative">
+                    <NavLink to="/profile" className="flex items-center gap-3 overflow-hidden flex-1">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-500 to-cyan-500 p-[2px] shrink-0">
                             {currentUser?.photoURL ? (
                                 <img src={currentUser.photoURL} alt={userName} className="w-full h-full rounded-full object-cover border-2 border-[#030712]" />
@@ -95,7 +99,7 @@ export default function Sidebar() {
                             <p className="font-bold text-white text-sm truncate">{userName}</p>
                             <p className="text-slate-500 text-xs truncate">@{userName.toLowerCase().replace(/\s/g, '')}</p>
                         </div>
-                    </div>
+                    </NavLink>
                     <button
                         onClick={handleSignOut}
                         className="p-2 text-slate-500 hover:text-rose-500 transition-colors"

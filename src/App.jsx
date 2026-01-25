@@ -6,7 +6,11 @@ import Home from './pages/Home';
 import Circles from './pages/Circles';
 import CreateCircle from './pages/CreateCircle';
 import Compose from './pages/Compose';
+import Profile from './pages/Profile';
 import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import Transparency from './pages/Transparency';
+import SearchPage from './pages/Search';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
 import LoadingScreen from './components/LoadingScreen';
@@ -38,7 +42,14 @@ function AppRoutes() {
           <Route path="/circles" element={<Circles />} />
           <Route path="/circles/create" element={<CreateCircle />} />
           <Route path="/compose" element={<Compose />} />
+          <Route path="/profile/:userId" element={<Profile />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/transparency" element={<Transparency />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

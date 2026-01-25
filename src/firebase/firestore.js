@@ -13,7 +13,8 @@ import {
     serverTimestamp,
     arrayUnion,
     arrayRemove,
-    onSnapshot
+    onSnapshot,
+    runTransaction
 } from "firebase/firestore";
 import { db } from "./config";
 
@@ -354,6 +355,104 @@ export async function getAllUsers() {
         return { success: true, data: users };
     } catch (error) {
         // Don't log detailed permissions error to console to keep clean
+        return { success: false, error: error.message };
+    }
+}
+// ============ FOLLOW SYSTEM ============
+
+// Follow a user
+export async function followUser(currentUserId, targetUserId) {
+    if (!currentUserId || !targetUserId || currentUserId === targetUserId) return { success: false, error: "Invalid IDs" };
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            // Refs
+            const currentUserRef = doc(db, "users", currentUserId);
+            const targetUserRef = doc(db, "users", targetUserId);
+
+            const followingRef = doc(db, "users", currentUserId, "following", targetUserId);
+            const followerRef = doc(db, "users", targetUserId, "followers", currentUserId);
+
+            // Perform ALL reads first
+            const followingDoc = await transaction.get(followingRef);
+            const currentUserDoc = await transaction.get(currentUserRef);
+            const targetUserDoc = await transaction.get(targetUserRef);
+
+            // Logic Check
+            if (followingDoc.exists()) {
+                throw "Already following";
+            }
+
+            const newFollowingCount = (currentUserDoc.exists() ? (currentUserDoc.data()?.followingCount || 0) : 0) + 1;
+            const newFollowersCount = (targetUserDoc.exists() ? (targetUserDoc.data()?.followersCount || 0) : 0) + 1;
+
+            // Perform ALL writes
+            transaction.set(followingRef, {
+                timestamp: serverTimestamp()
+            });
+
+            transaction.set(followerRef, {
+                timestamp: serverTimestamp()
+            });
+
+            transaction.set(currentUserRef, { followingCount: newFollowingCount }, { merge: true });
+            transaction.set(targetUserRef, { followersCount: newFollowersCount }, { merge: true });
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Follow user error:", error);
+        return { success: false, error: error.message || error };
+    }
+}
+
+// Unfollow a user
+export async function unfollowUser(currentUserId, targetUserId) {
+    if (!currentUserId || !targetUserId) return { success: false, error: "Invalid IDs" };
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const currentUserRef = doc(db, "users", currentUserId);
+            const targetUserRef = doc(db, "users", targetUserId);
+
+            const followingRef = doc(db, "users", currentUserId, "following", targetUserId);
+            const followerRef = doc(db, "users", targetUserId, "followers", currentUserId);
+
+            // Perform ALL reads first
+            const followingDoc = await transaction.get(followingRef);
+            const currentUserDoc = await transaction.get(currentUserRef);
+            const targetUserDoc = await transaction.get(targetUserRef);
+
+            // Logic Check
+            if (!followingDoc.exists()) {
+                throw "Not following";
+            }
+
+            const newFollowingCount = Math.max(0, (currentUserDoc.exists() ? (currentUserDoc.data()?.followingCount || 0) : 0) - 1);
+            const newFollowersCount = Math.max(0, (targetUserDoc.exists() ? (targetUserDoc.data()?.followersCount || 0) : 0) - 1);
+
+            // Perform ALL writes
+            transaction.delete(followingRef);
+            transaction.delete(followerRef);
+
+            transaction.update(currentUserRef, { followingCount: newFollowingCount });
+            transaction.update(targetUserRef, { followersCount: newFollowersCount });
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Unfollow user error:", error);
+        return { success: false, error: error.message || error };
+    }
+}
+
+// Check if following
+export async function checkIsFollowing(currentUserId, targetUserId) {
+    try {
+        const followingRef = doc(db, "users", currentUserId, "following", targetUserId);
+        const docSnap = await getDoc(followingRef);
+        return { success: true, isFollowing: docSnap.exists() };
+    } catch (error) {
         return { success: false, error: error.message };
     }
 }

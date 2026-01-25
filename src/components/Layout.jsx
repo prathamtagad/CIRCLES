@@ -20,10 +20,20 @@ export default function Layout() {
 
     const mobileNavItems = [
         { path: '/', icon: Home, label: 'Home' },
-        { path: '/circles', icon: Users, label: 'Circles' },
+        { path: '/search', icon: Search, label: 'Search' },
         { path: '/compose', icon: Plus, label: 'Post', isFab: false },
-        { path: '/privacy', icon: Shield, label: 'Privacy' },
-        { path: '/settings', icon: Settings, label: 'Config' },
+        { path: '/circles', icon: Users, label: 'Circles' },
+        { path: '/profile', icon: UserPlus, label: 'Profile' }, // Actually Profile is top right, let's make this something else or just keep 4-5 items
+    ];
+    // Refined Mobile Nav
+    // Home | Search | Post (+) | Circles | Menu (Settings/Privacy)
+    // Actually keep it simple as user requested "Search page like Instagram"
+    const refinedMobileNav = [
+        { path: '/', icon: Home, label: 'Home' },
+        { path: '/search', icon: Search, label: 'Search' },
+        { path: '/compose', icon: Plus, label: 'Post' },
+        { path: '/circles', icon: Users, label: 'Circles' },
+        { path: '/profile', icon: UserPlus, label: 'You' }, // Using User icon for profile
     ];
 
     // Filter users for "Suggested"
@@ -63,7 +73,15 @@ export default function Layout() {
                     {/* Top Mobile Header */}
                     <div className="md:hidden sticky top-0 z-40 glass border-b border-white/5 px-4 h-14 flex items-center justify-between">
                         <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">Circles</span>
-                        <div className="w-8 h-8 rounded-full bg-slate-800"></div>{/* Placeholder for user */}
+                        <Link to="/profile">
+                            {currentUser?.photoURL ? (
+                                <img src={currentUser.photoURL} className="w-8 h-8 rounded-full object-cover border border-white/10" />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold">
+                                    {currentUser?.displayName?.charAt(0) || 'U'}
+                                </div>
+                            )}
+                        </Link>
                     </div>
 
                     <Outlet />
@@ -122,7 +140,7 @@ export default function Layout() {
                         <div className="space-y-4">
                             {suggestedUsers.length > 0 ? suggestedUsers.map(u => (
                                 <div key={u.id} className="flex items-center justify-between group">
-                                    <div className="flex items-center gap-3 overflow-hidden">
+                                    <Link to={`/profile/${u.id}`} className="flex items-center gap-3 overflow-hidden flex-1">
                                         <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-400 shrink-0">
                                             {u.photoURL ? (
                                                 <img src={u.photoURL} className="w-full h-full rounded-full object-cover" />
@@ -131,10 +149,10 @@ export default function Layout() {
                                             )}
                                         </div>
                                         <div className="flex flex-col min-w-0">
-                                            <span className="font-bold text-[15px] truncate text-white">{u.name}</span>
+                                            <span className="font-bold text-[15px] truncate text-white hover:underline">{u.name}</span>
                                             <span className="text-xs text-slate-500 truncate">Suggested for you</span>
                                         </div>
-                                    </div>
+                                    </Link>
                                     <Link
                                         to="/circles/create"
                                         className="p-2 rounded-full bg-white/5 hover:bg-violet-500/20 text-violet-400 transition-colors"
@@ -165,7 +183,7 @@ export default function Layout() {
             {/* MOBILE BOTTOM NAV */}
             <nav className="md:hidden fixed bottom-0 inset-x-0 border-t border-white/5 bg-[#030712]/90 backdrop-blur-xl z-50 pb-safe">
                 <div className="flex justify-around items-center h-16">
-                    {mobileNavItems.map(({ path, icon: Icon, label }) => (
+                    {refinedMobileNav.map(({ path, icon: Icon, label }) => (
                         <NavLink
                             key={path}
                             to={path}
