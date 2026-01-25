@@ -97,7 +97,7 @@
 
 - **Pratham Tagad**: "Our fearless lead. Architecture genius."
 - **Karan Sachdev**: "The reason the app looks this good."
-- **Madhav Maheshwari**: "Our security guard. If there's a vulnerability, Madhav already patched it."
+- **Madhav Mandhanya**: "Our security guard. If there's a vulnerability, Madhav already patched it."
 
 ---
 

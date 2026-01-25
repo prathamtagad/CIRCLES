@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatDistanceToNow } from '../utils/format';
-import { Heart, MessageCircle, MoreHorizontal, Lock, CheckCircle2, Shield, Share2 } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Lock, CheckCircle2, Shield, Share2, ArrowUp, Eye } from 'lucide-react';
 
 export default function PostCard({ post, liteMode, style }) {
     const {
@@ -130,8 +130,8 @@ export default function PostCard({ post, liteMode, style }) {
                     <button
                         onClick={handleLike}
                         className={`group/like flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${isLiked
-                                ? 'text-rose-500 bg-rose-500/10'
-                                : 'text-slate-400 hover:text-rose-500 hover:bg-rose-500/10'
+                            ? 'text-rose-500 bg-rose-500/10'
+                            : 'text-slate-400 hover:text-rose-500 hover:bg-rose-500/10'
                             }`}
                     >
                         <div className="relative">

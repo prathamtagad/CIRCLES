@@ -298,7 +298,7 @@ def create_presentation():
     team = [
         ("🧠", "Pratham Tagad", "Lead Architect & Full Stack", "Vision & Architecture", COLORS['amber'], True),
         ("🎨", "Karan Sachdev", "Frontend & UI/UX", "Pixel-perfect interfaces", COLORS['accent'], False),
-        ("🔐", "Madhav Maheshwari", "Backend & Security", "Data privacy & security", COLORS['success'], False),
+        ("🔐", "Madhav Mandhanya", "Backend & Security", "Data privacy & security", COLORS['success'], False),
     ]
     
     for i, (icon, name, role, bio, color, is_lead) in enumerate(team):
