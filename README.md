@@ -88,7 +88,7 @@ Open your browser and navigate to `http://localhost:5173` (or the port shown in 
 
 ## 👥 The Team
 
-*   **🏆 Pratham Tagad:** Lead Architect & Full Stack Engineer
+*   **🏆 Pratham Tagad:** The Lead Architect & Full Stack Engineer
 *   **🎨 Madhav Maheshwari:** Frontend Specialist & UI/UX Design
 *   **🔐 Karan Sachdev:** Backend Engineer & Security Infrastructure
 
